@@ -1,0 +1,77 @@
+services:
+  vanilla-minecraft:
+    image: itzg/minecraft-server
+    container_name: vanilla_minecraft
+    stdin_open: true
+    tty: true
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      INIT_MEMORY: "2G"
+      MAX_MEMORY: "4G"
+      USE_AIKAR_FLAGS: "TRUE"
+      DIFFICULTY: "HARD"
+      MAX_PLAYERS: "69"
+      SNOOPER_ENABLED: "FALSE"
+    volumes:
+      - ./vanilla-data:/data
+    networks:
+      - game-network
+    restart: unless-stopped
+
+  ftb-minecraft:
+    image: itzg/minecraft-server
+    container_name: ftb_minecraft
+    stdin_open: true
+    tty: true
+    ports:
+      - "25575:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FTBA"
+      FTB_MODPACK_ID: "119"
+      INIT_MEMORY: "2G"
+      MAX_MEMORY: "4G"
+      USE_AIKAR_FLAGS: "TRUE"
+      DIFFICULTY: "HARD"
+      MAX_PLAYERS: "69"
+      SNOOPER_ENABLED: "FALSE"
+    volumes:
+      - ./ftb-data:/data
+    networks:
+      - game-network
+    restart: unless-stopped
+
+  terraria:
+    image: beardedio/terraria:tshock-latest
+    container_name: terraria
+    stdin_open: true
+    tty: true
+    ports:
+      - "7777:7777"
+    environment:
+      - world=Niner_Gang.wld
+    volumes:
+      - ./terraria-data:/config
+    networks:
+      - game-network
+    restart: unless-stopped
+
+  factorio:
+    image: factoriotools/factorio:stable
+    container_name: factorio
+    stdin_open: true
+    tty: true
+    ports:
+      - "34197:34197/udp"
+    volumes:
+      - ./factorio-data/factorio:/factorio
+    networks:
+      - game-network
+    restart: unless-stopped
+
+networks:
+  game-network:
+    driver: bridge
