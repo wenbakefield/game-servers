@@ -1,76 +1,154 @@
 services:
+  traefik:
+    image: traefik:v2.4
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.minecraft.address=:25565"
+      - "--entrypoints.terraria.address=:7777"
+      - "--entrypoints.factorio.address=:34197/udp"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik dashboard
+      - "25565:25565" # Minecraft
+      - "7777:7777" # Terraria
+      - "34197:34197/udp" # Factorio
+    networks:
+      - game-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  lazytainer:
+    image: ghcr.io/vmorganp/lazytainer:master
+    environment:
+      VERBOSE: false
+    ports:
+      - 25565:25565
+      - 7777:7777
+      - 34197:34197/udp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - lazytainer.group.minecraft.sleepMethod=stop
+      - lazytainer.group.minecraft.ports=25565
+      - lazytainer.group.minecraft.minPacketThreshold=2 # Start after two incoming packets
+      - lazytainer.group.minecraft.inactiveTimeout=600 # 10 minutes
+      - lazytainer.group.terraria.sleepMethod=stop
+      - lazytainer.group.terraria.ports=7777
+      - lazytainer.group.terraria.minPacketThreshold=2 # Start after two incoming packets
+      - lazytainer.group.terraria.inactiveTimeout=600 # 10 minutes
+      - lazytainer.group.factorio.sleepMethod=stop
+      - lazytainer.group.factorio.ports=34197
+      - lazytainer.group.factorio.minPacketThreshold=2 # Start after two incoming packets
+      - lazytainer.group.factorio.inactiveTimeout=600 # 10 minutes
+    restart: unless-stopped
+    network_mode: bridge
+    networks:
+      - game-network
+
   vanilla-minecraft:
     image: itzg/minecraft-server
     container_name: vanilla_minecraft
     stdin_open: true
     tty: true
-    ports:
-      - "25565:25565"
     environment:
       EULA: "TRUE"
       TYPE: "FABRIC"
-      INIT_MEMORY: "2G"
-      MAX_MEMORY: "4G"
+      VERSION: "1.21"
+      MEMORY: ""
+      JVM_XX_OPTS: "-XX:MaxRAMPercentage=75"
       USE_AIKAR_FLAGS: "TRUE"
       DIFFICULTY: "HARD"
       MAX_PLAYERS: "69"
       SNOOPER_ENABLED: "FALSE"
+      STOP_SERVER_ANNOUNCE_DELAY: "30"
+    deploy:
+      limits:
+        memory: 4G  
+      reservations:
+        memory: 2G
+    healthcheck:
+      test: mc-health
+      start_period: 2m
+      interval: 1m
+      retries: 3
     volumes:
       - ./vanilla-data:/data
+    labels:
+      - lazytainer.group=minecraft
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
+      - "traefik.tcp.routers.minecraft.rule=HostSNI(`minecraft.benwakefield.dev`)"
+      - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
+    depends_on:
+      - lazytainer
+    network_mode: service:lazytainer
+    stop_grace_period: 60s
+    restart: unless-stopped
     networks:
       - game-network
-    restart: unless-stopped
-
-  ftb-minecraft:
-    image: itzg/minecraft-server
-    container_name: ftb_minecraft
-    stdin_open: true
-    tty: true
-    ports:
-      - "25575:25565"
-    environment:
-      EULA: "TRUE"
-      TYPE: "FTBA"
-      FTB_MODPACK_ID: "119"
-      INIT_MEMORY: "2G"
-      MAX_MEMORY: "4G"
-      USE_AIKAR_FLAGS: "TRUE"
-      DIFFICULTY: "HARD"
-      MAX_PLAYERS: "69"
-      SNOOPER_ENABLED: "FALSE"
-    volumes:
-      - ./ftb-data:/data
-    networks:
-      - game-network
-    restart: unless-stopped
 
   terraria:
     image: beardedio/terraria:tshock-latest
     container_name: terraria
     stdin_open: true
     tty: true
-    ports:
-      - "7777:7777"
     environment:
       - world=Niner_Gang.wld
+    deploy:
+      limits:
+        memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/v2/server/status"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
     volumes:
       - ./terraria-data:/config
+    labels:
+      - lazytainer.group=terraria
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.terraria.entrypoints=terraria"
+      - "traefik.tcp.routers.terraria.rule=HostSNI(`terraria.benwakefield.dev`)"
+      - "traefik.tcp.services.terraria.loadbalancer.server.port=7777"
+    depends_on:
+      - lazytainer
+    network_mode: service:lazytainer
+    restart: unless-stopped
     networks:
       - game-network
-    restart: unless-stopped
 
   factorio:
     image: factoriotools/factorio:stable
     container_name: factorio
     stdin_open: true
     tty: true
-    ports:
-      - "34197:34197/udp"
+    deploy:
+      limits:
+        memory: 2G
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "34197"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
     volumes:
       - ./factorio-data/factorio:/factorio
+    labels:
+      - lazytainer.group=factorio
+      - "traefik.enable=true"
+      - "traefik.udp.routers.factorio.entrypoints=factorio"
+      - "traefik.udp.routers.factorio.rule=HostSNI(`factorio.benwakefield.dev`)"
+      - "traefik.udp.services.factorio.loadbalancer.server.port=34197"
+    depends_on:
+      - lazytainer
+    network_mode: service:lazytainer
+    restart: unless-stopped
     networks:
       - game-network
-    restart: unless-stopped
 
 networks:
   game-network:
