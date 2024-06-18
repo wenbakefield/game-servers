@@ -59,18 +59,12 @@ services:
       EULA: "TRUE"
       TYPE: "FABRIC"
       VERSION: "1.21"
-      MEMORY: ""
-      JVM_XX_OPTS: "-XX:MaxRAMPercentage=75"
+      MEMORY: "3G"
       USE_AIKAR_FLAGS: "TRUE"
       DIFFICULTY: "HARD"
       MAX_PLAYERS: "69"
       SNOOPER_ENABLED: "FALSE"
       STOP_SERVER_ANNOUNCE_DELAY: "30"
-    deploy:
-      limits:
-        memory: 4G  
-      reservations:
-        memory: 2G
     healthcheck:
       test: mc-health
       start_period: 2m
