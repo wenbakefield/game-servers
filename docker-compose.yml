@@ -20,6 +20,7 @@ services:
 
   lazytainer:
     image: ghcr.io/vmorganp/lazytainer:master
+    container_name: lazytainer
     environment:
       VERBOSE: false
     volumes:
