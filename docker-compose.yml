@@ -17,8 +17,6 @@ services:
       - "25565:25565" # Minecraft
       - "7777:7777" # Terraria
       - "34197:34197/udp" # Factorio
-    networks:
-      - game-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
@@ -47,8 +45,6 @@ services:
       - lazytainer.group.factorio.inactiveTimeout=600 # 10 minutes
     restart: unless-stopped
     network_mode: bridge
-    networks:
-      - game-network
 
   vanilla-minecraft:
     image: itzg/minecraft-server
@@ -83,8 +79,6 @@ services:
     network_mode: service:lazytainer
     stop_grace_period: 60s
     restart: unless-stopped
-    networks:
-      - game-network
 
   terraria:
     image: beardedio/terraria:tshock-latest
@@ -110,8 +104,6 @@ services:
       - lazytainer
     network_mode: service:lazytainer
     restart: unless-stopped
-    networks:
-      - game-network
 
   factorio:
     image: factoriotools/factorio:stable
@@ -135,9 +127,4 @@ services:
       - lazytainer
     network_mode: service:lazytainer
     restart: unless-stopped
-    networks:
-      - game-network
 
-networks:
-  game-network:
-    driver: bridge
