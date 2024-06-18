@@ -99,9 +99,6 @@ services:
     tty: true
     environment:
       - world=Niner_Gang.wld
-    deploy:
-      limits:
-        memory: 2G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7878/v2/server/status"]
       interval: 1m
@@ -127,9 +124,6 @@ services:
     container_name: factorio
     stdin_open: true
     tty: true
-    deploy:
-      limits:
-        memory: 2G
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "34197"]
       interval: 1m
