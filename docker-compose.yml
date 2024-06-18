@@ -5,12 +5,12 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--entrypoints.dashboard.address=:8080"
+      - "--entrypoints.dashboard.address=:8081"
       - "--entrypoints.minecraft.address=:25565"
       - "--entrypoints.terraria.address=:7777"
       - "--entrypoints.factorio.address=:34197/udp"
     ports:
-      - "8080:8080" # Traefik dashboard
+      - "8081:8081" # Traefik dashboard
       - "25565:25565" # Minecraft
       - "7777:7777" # Terraria
       - "34197:34197/udp" # Factorio
