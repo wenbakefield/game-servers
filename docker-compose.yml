@@ -25,10 +25,6 @@ services:
     image: ghcr.io/vmorganp/lazytainer:master
     environment:
       VERBOSE: false
-    ports:
-      - 25565:25565
-      - 7777:7777
-      - 34197:34197/udp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
