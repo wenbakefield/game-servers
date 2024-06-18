@@ -5,14 +5,11 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.dashboard.address=:8080"
       - "--entrypoints.minecraft.address=:25565"
       - "--entrypoints.terraria.address=:7777"
       - "--entrypoints.factorio.address=:34197/udp"
     ports:
-      - "80:80"
-      - "443:443"
       - "8080:8080" # Traefik dashboard
       - "25565:25565" # Minecraft
       - "7777:7777" # Terraria
@@ -43,9 +40,9 @@ services:
     restart: unless-stopped
     network_mode: bridge
 
-  vanilla-minecraft:
+  minecraft:
     image: itzg/minecraft-server
-    container_name: vanilla_minecraft
+    container_name: minecraft
     stdin_open: true
     tty: true
     environment:
