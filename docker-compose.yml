@@ -1,23 +1,4 @@
 services:
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--entrypoints.dashboard.address=:8081"
-      - "--entrypoints.minecraft.address=:25565"
-      - "--entrypoints.terraria.address=:7777"
-      - "--entrypoints.factorio.address=:34197/udp"
-    ports:
-      - "8081:8081" # Traefik dashboard
-      - "25565:25565" # Minecraft
-      - "7777:7777" # Terraria
-      - "34197:34197/udp" # Factorio
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    network_mode: bridge
-
   lazytainer:
     image: ghcr.io/vmorganp/lazytainer:master
     container_name: lazytainer
@@ -39,7 +20,10 @@ services:
       - lazytainer.group.factorio.minPacketThreshold=2 # Start after two incoming packets
       - lazytainer.group.factorio.inactiveTimeout=600 # 10 minutes
     restart: unless-stopped
-    network_mode: bridge
+    networks:
+      game_net:
+        aliases:
+          - lazytainer
 
   minecraft:
     image: itzg/minecraft-server
@@ -65,13 +49,12 @@ services:
       - ./vanilla-data:/data
     labels:
       - lazytainer.group=minecraft
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
-      - "traefik.tcp.routers.minecraft.rule=HostSNI(`minecraft.benwakefield.dev`)"
-      - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
     depends_on:
       - lazytainer
-    network_mode: service:lazytainer
+    networks:
+      - game_net
+    ports:
+      - "25565:25565"
     stop_grace_period: 60s
     restart: unless-stopped
 
@@ -91,13 +74,12 @@ services:
       - ./terraria-data:/config
     labels:
       - lazytainer.group=terraria
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.terraria.entrypoints=terraria"
-      - "traefik.tcp.routers.terraria.rule=HostSNI(`terraria.benwakefield.dev`)"
-      - "traefik.tcp.services.terraria.loadbalancer.server.port=7777"
     depends_on:
       - lazytainer
-    network_mode: service:lazytainer
+    networks:
+      - game_net
+    ports:
+      - "7777:7777"
     restart: unless-stopped
 
   factorio:
@@ -114,12 +96,14 @@ services:
       - ./factorio-data/factorio:/factorio
     labels:
       - lazytainer.group=factorio
-      - "traefik.enable=true"
-      - "traefik.udp.routers.factorio.entrypoints=factorio"
-      - "traefik.udp.routers.factorio.rule=HostSNI(`factorio.benwakefield.dev`)"
-      - "traefik.udp.services.factorio.loadbalancer.server.port=34197"
     depends_on:
       - lazytainer
-    network_mode: service:lazytainer
+    networks:
+      - game_net
+    ports:
+      - "34197:34197"
     restart: unless-stopped
 
+networks:
+  game_net:
+    driver: bridge
