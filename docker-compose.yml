@@ -8,7 +8,8 @@ services:
       EULA: "TRUE"
       TYPE: "FABRIC"
       VERSION: "1.21"
-      MEMORY: "3G"
+      INIT_MEMORY: 1G
+      MAX_MEMORY: 3G
       USE_AIKAR_FLAGS: "TRUE"
       DIFFICULTY: "HARD"
       MAX_PLAYERS: "69"
